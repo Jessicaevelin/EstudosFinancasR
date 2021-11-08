@@ -1,0 +1,64 @@
+"0","# objetos que irao receber os precos"
+"0","ativos <- list()"
+"0","precosTemp <- NULL"
+"0",""
+"0","# Laco de repeticao, roda esse bloco de codigo de acordo com o tamanho da carteira"
+"0","i <- 1"
+"0","while(i <= length(codigos)) {"
+"0","  precosTemp  <- na.omit(get.hist.quote(codigos[i], quote = ""Close"", start = data.inicial, end = data.final))"
+"0","  ativos[[codigos[i]]] <- precosTemp"
+"0","  i <- i + 1"
+"0","  cat(""importando os preços do cod.:"", codigos[i])"
+"0","}"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-10-28
+"
+"1","importando os preços do cod.:"
+"1"," "
+"1","TAEE3.SA"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-10-28
+"
+"1","importando os preços do cod.:"
+"1"," "
+"1","CMIG4.SA"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-10-28
+"
+"1","importando os preços do cod.:"
+"1"," "
+"1","EQTL3.SA"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-10-28
+"
+"1","importando os preços do cod.:"
+"1"," "
+"1","ENBR3.SA"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-10-28
+"
+"1","importando os preços do cod.:"
+"1"," "
+"1","NA"
+"0","# download ibovespa"
+"0",""
+"0","ibov  <- na.omit(get.hist.quote(""^BVSP"", quote = ""Close"", start = data.inicial, end = data.final))"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-10-28
+"
+"0","# download selic"
+"0","Selic.hist <- na.omit(BETSget(11, from = data.inicial, to = data.final))"
+"0","selic <- zoo(Selic.hist$value)"
+"0","index(selic) <- Selic.hist$date"
+"0",""
+"0","precos = as.data.frame(ativos)"
+"0","names(precos) <- codigos"
+"0",""
+"0","# excluido os objetos que não serão mais ultilizados"
+"0","rm(Selic.hist, i, precosTemp, ativos)"

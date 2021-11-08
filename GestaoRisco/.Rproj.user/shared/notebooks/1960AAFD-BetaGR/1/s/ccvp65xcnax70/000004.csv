@@ -1,0 +1,49 @@
+"0","ativo1 <- na.omit(get.hist.quote(codigos[1], quote = ""Close"", start = data.inicial, end = data.final))"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-11-05
+"
+"0","ativo2 <- na.omit(get.hist.quote(codigos[2], quote = ""Close"", start = data.inicial, end = data.final))"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-11-05
+"
+"0","ativo3 <- na.omit(get.hist.quote(codigos[3], quote = ""Close"", start = data.inicial, end = data.final))"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-11-05
+"
+"0","ativo4 <- na.omit(get.hist.quote(codigos[4], quote = ""Close"", start = data.inicial, end = data.final))"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-11-05
+"
+"0","ativo5 <- na.omit(get.hist.quote(codigos[5], quote = ""Close"", start = data.inicial, end = data.final))"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-11-05
+"
+"0","ibov <- na.omit(get.hist.quote(""^BVSP"", quote = ""Close"", start = data.inicial, end = data.final))"
+"1","time series starts 2021-01-04
+"
+"1","time series ends   2021-11-05
+"
+"0","Selic <- na.omit(BETSget(11, from = data.inicial, to = data.final))"
+"0","selic <- zoo(Selic$value)"
+"0","index(selic) <- Selic$date"
+"0",""
+"0","length(ibov)"
+"1","[1]"
+"1"," 209"
+"1","
+"
+"0","length(ativo1)"
+"1","[1]"
+"1"," 209"
+"1","
+"
+"0","length(selic)"
+"1","[1]"
+"1"," 213"
+"1","
+"

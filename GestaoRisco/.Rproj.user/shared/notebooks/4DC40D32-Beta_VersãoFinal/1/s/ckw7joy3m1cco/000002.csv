@@ -1,0 +1,4 @@
+"0","library(BETS) # importar a selic"
+"0","library(zoo) # manupulacao de dados"
+"0","library(quantmod) # importar os precos do yahoo"
+"0","library(tidyverse) # manupulacao de dados"

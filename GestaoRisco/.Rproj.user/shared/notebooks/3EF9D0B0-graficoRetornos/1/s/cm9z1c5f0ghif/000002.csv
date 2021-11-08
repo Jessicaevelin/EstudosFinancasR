@@ -1,0 +1,3 @@
+"0","RExc.ibov <- df.retornos$R.ibov - df.retornos$R.selic"
+"0","RExc.ativo1 <- df.retornos$R.ativo1 - df.retornos$R.selic"
+"0","RExc.ativo2 <- df.retornos$R.ativo2 - df.retornos$R.selic"
