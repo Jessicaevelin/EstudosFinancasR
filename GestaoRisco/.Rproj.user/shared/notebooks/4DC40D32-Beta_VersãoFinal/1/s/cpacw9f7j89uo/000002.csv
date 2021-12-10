@@ -1,6 +1,0 @@
-"0","remove(list=ls())"
-"0","ls()"
-"1","character(0)
-"
-"0","options(scipen=999)"
-"0","options(max.print = 100000)"

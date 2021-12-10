@@ -1,0 +1,137 @@
+---
+title: "Relatório Beta"
+author: "Jessica Evelin S. Damacena"
+date: "11/11/2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+```
+
+```{r,include = FALSE}
+source("D:/Programacão/EstudosFinancasR/GestaoRisco/calculandobetaemsegundoplano.R", encoding = 'UTF-8', echo=TRUE)
+```
+
+O CAPM mede o risco em termos de variância não diversificável e relaciona os retornos esperados a esta medida de risco. O risco não-diversificável para qualquer ativo é medido pelo seu beta, que pode ser utilizado para gerar um retorno esperado.
+
+O beta da carteira de mercado é 1 (uma vez que $Cov_m=σ_m^2$) ativos que são mais arriscados que a média (usando esta medida de risco) terão betas mais do que 1, e ativos mais seguros do que a média terá betas menores do que 1. O ativo livre de risco terá um beta igual a zero.
+ 
+O procedimento padrão para estimar betas é regredir os retornos sobre ações $(R_a)$ em comparação aos retornos de mercado $(R_a)$: 
+
+  $R_a=a+βR_m$
+ 
+Onde: 
+
+  $a$ = ponto de interceptação da regressão
+  
+  $β$ = inclinação da regressão = Covariância $(R_a,R_m)/σ_m^2$
+ 
+A inclinação da regressão corresponde ao beta da ação, e mede o grau de risco da mesma. O ponto de interceptação da regressão fornece uma medida simples de desempenho durante o período da regressão, relativo ao CAPM.
+ 
+$R_a=a+βR_m$  : Equação de Regressão
+
+$R_a=R_f+β(R_m-R_f)= R_f (1-β)+βR_m$  : CAPM
+ 
+Assim, uma comparação do ponto de interceptação ($a$) com $R_f(1-β)$deve fornecer uma medida do desempenho da ação, pelo menos em relação ao CAPM. 
+ 
+Se $a> R_f (1-β)$ : A ação apresentou desempenho superior ao do esperado durante o período de regressão;
+ 
+Se $a= R_f (1-β)$ : A ação apresentou desempenho esperado durante o período de regressão;
+ 
+Se $a> R_f (1-β)$ : A ação apresentou desempenho inferior ao do esperado durante o período de regressão.
+ 
+A estatística útil final que emerge da regressão é o R ao Quadrado ($R^2$) da regressão. Embora a explicação estatística do $R^2$ seja a de que oferece uma medida da qualidade da adequabilidade da regressão, o raciocínio financeiro relativo ao $R^2$ é que ele fornece uma estimativa da proporção de risco (variância) de uma empresa que pode ser atribuída ao risco do mercado; o saldo (1 — $R^2$) pode ser atribuído a risco específico da empresa.
+
+```{r}
+data.inicial <- "2021-01-01"
+data.final <- "2021-11-05"
+periodos <- seq(15,150,15) # De 15 em 15 até chegar em 150 observacões
+```
+
+# Setor Energia
+```{r, message=FALSE,warning=FALSE, eval=FALSE}
+energia <- c("CPLE6.SA","TAEE3.SA","CMIG4.SA","EQTL3.SA","ENBR3.SA")
+info.energia <- calcularbetasetores(energia)
+
+betas.energia <- info.energia[[1]]
+alfa.energia <- info.energia[[2]]
+r2.energia <- info.energia[[3]]
+retornoAcum.energia <- info.energia[[4]]
+datas = as.Date(row.names(info.energia$RetornosAcumulados))
+```
+
+## Gráficos
+
+```{r}
+plot(
+  datas,
+  retornoAcum.energia[[1]],
+  type = "l",
+  main = "Retornos Acumulados",
+  xlab = "Datas",
+  ylab = "%",
+  col = "black",
+  xlim = c(min(datas), max(datas)),
+  ylim = c(min(retornoAcum.energia), max(retornoAcum.energia)),
+  lwd = 3
+) 
+
+lines(datas, retornoAcum.energia[[2]], col="orange", type="l", lwd = 2) 
+lines(datas, retornoAcum.energia[[3]], col="purple", type="l", lwd = 2) 
+lines(datas, retornoAcum.energia[[4]], col="green", type="l", lwd = 2) 
+lines(datas, retornoAcum.energia[[5]], col="red", type="l", lwd = 2) 
+lines(datas, retornoAcum.energia[[6]], col="blue", type="l", lwd = 2) 
+
+legend("topleft",
+       c("IBOVESPA", energia),
+       fill=c("black","orange","purple", "green", "red", "blue"))
+```
+
+```{r}
+betas.energia$Betas
+```
+
+```{r}
+datas = as.Date(row.names(betas.energia$RetornosAcumulados))
+be1 = betas.energia$Betas[[1]]
+be2 = betas.energia$Betas[[2]]
+be3 = betas.energia$Betas[[3]]
+be4 = betas.energia$Betas[[4]]
+be5 = betas.energia$Betas[[5]]
+
+plot(
+  periodos,
+  type = "l",
+  main = "Betas",
+  xlab = "ano",
+  ylab = "Taxa de ocupação %",
+  col = "black",
+  xlim = c(min(periodos), max(periodos)),
+  ylim = c(min(min(betas.energia$Betas)), max(betas.energia$Betas)),
+  lwd = 3
+) 
+
+lines(periodos, be1 , col="orange", type="l", lwd = 2) 
+lines(periodos, be2 , col="purple", type="l", lwd = 2) 
+lines(periodos, be3 , col="green", type="l", lwd = 2) 
+lines(periodos, be4 , col="red", type="l", lwd = 2) 
+lines(periodos, be5 , col="blue", type="l", lwd = 2) 
+
+legend("topleft",
+       c("IBOVESPA", energia),
+       fill=c("black","orange","purple", "green", "red", "blue"))
+```
+
+
+```{r}
+betas.energia$Interceptos
+```
+
+```{r}
+betas.energia$R2s
+```
+
+
+
+
+

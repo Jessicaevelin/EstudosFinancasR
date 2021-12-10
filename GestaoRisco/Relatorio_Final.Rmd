@@ -1,0 +1,231 @@
+---
+title: "Relatório de Gestão de Risco"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+    html_document:
+       highlight: textmate
+       includes:
+         in_header: "cabecalho2.html"
+       theme: flatly
+       number_sections: yes
+       toc: yes
+       toc_float:
+         collapsed: yes
+         smooth_scroll: no
+---
+
+
+```{r Configuracoes, include=FALSE}
+remove(list=ls())
+ls()
+options(scipen=999)
+options(max.print = 100000)
+#setwd("~/Documents/UFPB2021/TraineeGR/GestaoRisco")
+
+# Executando um script externo
+#source("Relatorio_Final.R", encoding = 'UTF-8', echo=TRUE)
+```
+
+**Fonte:** Yahoo Finance
+
+# Carregamento dos pacotes
+```{r Pacotes, message=FALSE, warning=FALSE}
+library(tseries)
+library(zoo)
+library(tidyverse)
+library(kableExtra)
+library(reshape)
+```
+
+```{r Função GR, include=FALSE}
+calcular <- function(codigos) {
+  # Laco de repeticao, roda esse bloco de codigo de acordo com o tamanho da carteira
+  ativos <- list()
+  precosTemp <- NULL
+  
+  i <- 1
+  while(i <= length(codigos)) {
+    precosTemp  <- na.omit(get.hist.quote(codigos[i], quote = "Close", start = data.inicial, end = data.final))
+    ativos[[codigos[i]]] <- precosTemp
+    i <- i + 1
+  }
+  
+  # download ibovespa
+  ibov  <- na.omit(get.hist.quote("^BVSP", quote = "Close", start = data.inicial, end = data.final))
+  
+  precos = as.data.frame(ativos)
+  names(precos) <- codigos
+  
+  # data frame com os precos e o ibovespa
+  df.precos <- as.data.frame(na.omit(merge(ibov, as.zoo(precos))))
+  names(df.precos) <- c("IBOVESPA", codigos)
+  
+  # Retornos -------------------------------------------------------------------
+  
+  # função que calcula os retornos
+  retorno = function(x){(diff(log(x)))*100}
+  
+  # retornos de todas as colunas
+  df.retornos <- as.data.frame(lapply(df.precos, retorno))
+  
+  # Estatisticas Descritivas dos Retornos  --------------------------------------------------------------
+  
+  # média dos retornos
+  mediaRetornos <- df.retornos %>% 
+    summarise(across(.fns = mean))
+  
+  desvioRetornos <- df.retornos %>% 
+    summarise(across(.fns = sd)) 
+  
+  desvio_100 <- desvioRetornos/100
+  
+  coeficienteRetornos <- desvioRetornos/mediaRetornos
+  
+  mediaMes <- mediaRetornos *24
+  
+  volatilidadeRetornos <- desvioRetornos*sqrt(252)
+  
+  # Juntando as informações estatísticas em um só data frame
+  estatisticasRetornos <- as.data.frame(rbind(mediaRetornos, desvioRetornos,desvio_100, coeficienteRetornos,mediaMes, volatilidadeRetornos))
+  
+  # Mudando o nome das linhas
+  rownames(estatisticasRetornos) <- c("Media", "SD","SD/100", "Cv", "Media Mensal", "Volatilidade")
+  
+  # Transpondo o data frame
+  estatisticasRetornos <- as.data.frame(t(estatisticasRetornos))
+  
+
+  return(list(
+    medias = mediaRetornos,
+    desvios = desvioRetornos,
+    coeficienteVariacao = coeficienteRetornos,
+    mediaMensal = mediaMes,
+    volatilidade = volatilidadeRetornos,
+    precos = df.precos,
+    retornos = df.retornos,
+    estatisticasDescritivas = estatisticasRetornos
+  ))
+}
+```
+
+# Parâmetros iniciais
+
+```{r Parametros}
+data.inicial <- Sys.Date()-300
+data.final <- Sys.Date()
+codigos <- c("SOMA3.SA","HYPE3.SA")
+```
+
+```{r, include=FALSE}
+info <- calcular(codigos)
+```
+
+# Visualizando o banco de dados
+
+## Preços {.tabset .tabset-fade}
+
+O banco contém `r nrow(info$precos)` observações e `r ncol(info$precos)-1` empresas.
+
+### Dados
+
+```{r, echo=FALSE}
+kable(head(info$precos, 5), col.names = names(info$precos)) %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+### Gráfico
+
+```{r, echo=FALSE}
+normalizado = data.frame(lapply(info$precos, function(x) x/x[1]))
+
+normalizado$data = rownames(info$precos)
+normalizado$data = as.Date(normalizado$data, format = "%Y-%m-%d")
+
+d = melt(normalizado, id.vars = 'data')
+
+ggplot(d, aes(data, value, col=variable, group = variable)) +
+  geom_line()+
+  xlab('Datas') + ylab('Preços')
+```
+
+## Retornos {.tabset .tabset-fade}
+
+### Dados
+
+```{r, echo=FALSE}
+kable(head(info$retornos, 5), col.names = names(info$retornos)) %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+### Gráfico
+
+```{r, echo=FALSE}
+graficoRetornos <- info$retornos
+datas <- tail(rownames(info$precos),nrow(info$precos)-1)
+graficoRetornos$data <- as.Date(datas, format = "%Y-%m-%d")
+
+d <- melt(graficoRetornos, id.vars = 'data')
+
+ggplot(d, aes(data, value, col=variable, group = variable)) +
+  geom_line()
+```
+
+## Estatísticas descritivas dos retornos
+
+```{r, echo=FALSE}
+kable(info$estatisticasDescritivas, col.names = colnames(info$estatisticasDescritivas)) %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+# Risco e Retorno {.tabset .tabset-fade}
+
+No mercado financeiro a escolha do consumidor está condicionada a sua condição natural de incertezas. Por definição, segundo Jorion(2003), a incerteza de um investimento é entendida como a possibilidade do resultado se afastar do esperado, ou seja, o Risco de se perder valores. Geralmente, em finanças, trata-se a palavra risco como relacionada ao risco de mercado, ou seja, pode ocorrer mudanças nas taxas de mercados, de preços dos ativos ou de uma carteira, com relação ao seu valor inicial.
+
+Os estudos no campo da microeconomia reforçam a compreensão do desempenho do consumidor em relação as suas preferências, restrições orçamentárias e escolhas sob incerteza.Além do indivíduo se deparar com o conjunto de oportunidades derivado de sua restrição orçamentária, restrição esta que representa as limitações ao consumo de diferentes bens devido à quantidade limitada de renda que possui, ele ainda se depara com a escolha intertemporal entre consumir toda sua renda ou poupar parte para ser consumida no futuro, trocando consumo presente por consumo futuro. (VARIAN, 2003). 
+
+A escolha dos ativos por parte do consumidor, agora denominado de investidor, depende de seu perfil, conservador ou agressivo. O investidor avesso ao risco possui uma função de utilidade côncava e sua inclinação torna-se cada vez mais plana à medida que a riqueza aumenta.O investidor propenso ao risco possui uma função de utilidade convexa e sua inclinação torna-se cada vez mais íngreme à medida que a riqueza aumenta.
+
+A partir da teoria microeconômica, Fama e MacBeth (1973), consideram, em seus estudos, a racionalidade dos investidores, aversão ao risco, aceitando taxas mais elevadas de riscoapenas se o retorno esperado também for elevado e a eficiência do mercado e a informação simétrica. 
+
+No campo dos investimentos, o maior grau de utilidade do indivíduo é representado pelo maior retorno do ativo a partir de um dado nível de risco. O retorno pode ser caracterizado como um ganho ou uma perda sofrida por um dado investimento feito anteriormente, mais conhecido em finanças como prêmio pelo risco. 
+
+Já, de acordo cm Markowitz (1952), pode-se utilizar instrumentos estatísticos par definição de riscos. O cálculo da média dos retornos do ativo representa seu o valor esperado e o desvio padrão, que indica a dispersão em torno da média, representando o nível de risco do ativo, quanto maior a dispersão em torno da média, maior o risco o ativo apresenta.
+
+## Dados
+
+```{r, echo=FALSE}
+riscoRetorno <- info$estatisticasDescritivas %>% select(Media, Cv)
+
+kable(riscoRetorno, col.names = colnames(riscoRetorno)) %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+## Gráfico
+
+```{r, echo=FALSE, warning=FALSE}
+Empresas = rownames(riscoRetorno)
+
+ggplot(riscoRetorno, aes(x=Cv, y=Media)) +
+  theme_update(text = element_text(size=20)) +
+  geom_point(aes(label = Empresas, colour = Empresas), size = 10)+
+  xlab('Risco') + ylab('Média dos Retornos')
+```
+
+## Maior risco e maior retorno
+
+```{r, echo=FALSE}
+maiorRisco <- riscoRetorno[which.max(riscoRetorno$Cv),]
+maiorRetorno <- riscoRetorno[which.max(riscoRetorno$Media),] 
+maiorRiscoRetorno <- cbind(rbind(maiorRisco,maiorRetorno),Tipo = c("Maior Risco", "Maior Retorno"))
+
+
+if (rownames(maiorRetorno) == rownames(maiorRisco)) {
+  kable(maiorRetorno, col.names = colnames(riscoRetorno)) %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+}else{
+  kable(maiorRiscoRetorno, col.names = colnames(maiorRiscoRetorno)) %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+}
+```
+
+
